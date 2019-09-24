@@ -1,0 +1,30 @@
+{
+  "name": "embark-nim-compiler",
+  "version": "5.0.0",
+  "description": "Plugin for Embark to compile Nim contracts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nim",
+    "nimplay",
+    "ewasm",
+    "plugin",
+    "contracts",
+    "ethereum",
+    "embark"
+  ],
+  "author": "Jonathan Rainville",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/embark-framework/embark-ewasm-deployer/issues"
+  },
+  "homepage": "https://github.com/embark-framework/embark-ewasm-deployer#readme",
+  "devDependencies": {
+    "eslint": "^5.16.0"
+  },
+  "dependencies": {
+    "shelljs": "^0.8.3"
+  }
+}
