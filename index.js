@@ -8,11 +8,31 @@ function buf2hex(buffer) { // buffer is an ArrayBuffer
 }
 
 class NimCompiler {
-  constructor(embark, _options) {
+  constructor(embark) {
     this.events = embark.events;
     this.logger = embark.logger;
 
     embark.registerCompiler(".nim", this.compile.bind(this));
+
+    const options = embark.pluginConfig;
+    if (options.setupBlockchainOptions) {
+      embark.registerActionForEvent("blockchain:config:modify", (currentConfig, cb) => {
+        const newConfig = Object.assign(currentConfig,
+          {
+            customOptions: [
+              `--vm.ewasm="${options.libHeraPath},metering=true,fallback=true"`,
+              '--vmodule="miner=12,rpc=12"',
+              '--etherbase="031159dF845ADe415202e6DA299223cb640B9DB0"'
+            ],
+            isDev: false,
+            networkId: 66,
+            networkType: 'custom',
+            genesisBlock: path.join(__dirname, './ewasm-testnet-geth-config.json'),
+            bootnodes: "enode://53458e6bf0353f3378e115034cf6c6039b9faed52548da9030b37b4672de4a8fd09f869c48d16f9f10937e7398ae0dbe8b9d271408da7a0cf47f42a09e662827@23.101.78.254:30303"
+          });
+          cb(null, newConfig)
+      });
+    }
   }
 
   async compile(contractFiles, options, cb) {
@@ -38,15 +58,16 @@ class NimCompiler {
         if (err) {
           this.logger.error('Error while getting ABI');
           this.logger.error(stderr);
-  	  return eachCb(err);
-       }
-       try {
-         const abi = JSON.parse(stdout);
-         compiledObject[className].abiDefinition = abi;
-         return eachCb();
-       } catch(e) {
-         return eachCb(e);
-       }
+          return eachCb(err);
+        }
+        try {
+          const abi = JSON.parse(stdout);
+          compiledObject[className].abiDefinition = abi;
+          return eachCb();
+        } catch(e) {
+          return eachCb(e);
+        }
+      });
     }, (err) => {
       cb(err, compiledObject);
     });
