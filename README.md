@@ -18,6 +18,7 @@ then add embark-nim-compiler to the plugins section in `embark.json`:
   "plugins": {
     "embark-nim-compiler": {
       "setupBlockchainOptions": true,
+      "useTestnet": false,
       "libHeraPath": "path/to/libHera.so"
     }
   }
@@ -31,4 +32,10 @@ then add embark-nim-compiler to the plugins section in `embark.json`:
 
 - [Embark](https://www.npmjs.com/package/embark) 5.0.0 or higher
 - A valid eWasm ready node. See https://github.com/ewasm/testnet for more details
+- Docker
 
+### Troubleshooting
+
+If you get an error related to docker or the image `jacqueswww/nimclang`, you might need to pull it first manually using:
+
+```docker pull jacqueswww/nimclang```

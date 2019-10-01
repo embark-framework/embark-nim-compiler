@@ -1,6 +1,6 @@
 const fs = require("fs");
-const path  = require('path');
-const { exec } = require('child_process');
+const path = require('path');
+const {exec} = require('child_process');
 const async = require('async');
 
 function buf2hex(buffer) { // buffer is an ArrayBuffer
@@ -11,6 +11,7 @@ class NimCompiler {
   constructor(embark) {
     this.events = embark.events;
     this.logger = embark.logger;
+    this.dappPath = embark.dappPath;
 
     embark.registerCompiler(".nim", this.compile.bind(this));
 
@@ -30,7 +31,7 @@ class NimCompiler {
             genesisBlock: path.join(__dirname, './ewasm-testnet-geth-config.json'),
             bootnodes: "enode://53458e6bf0353f3378e115034cf6c6039b9faed52548da9030b37b4672de4a8fd09f869c48d16f9f10937e7398ae0dbe8b9d271408da7a0cf47f42a09e662827@23.101.78.254:30303"
           });
-          cb(null, newConfig)
+        cb(null, newConfig);
       });
     }
   }
@@ -54,17 +55,16 @@ class NimCompiler {
       compiledObject[className].code = codeHex;
 
       // Get ABI from nim file
-      exec(`${path.join(__dirname, './tools/abi_gen')} ${file.path}`, (err, stdout, stderr) => {
+      exec(`docker run --entrypoint="abi_gen" -v "${this.dappPath('contracts')}":/code/ -w /code/ jacqueswww/nimclang ${path.basename(file.path)}`, (err, stdout, stderr) => {
         if (err) {
           this.logger.error('Error while getting ABI');
           this.logger.error(stderr);
           return eachCb(err);
         }
         try {
-          const abi = JSON.parse(stdout);
-          compiledObject[className].abiDefinition = abi;
+          compiledObject[className].abiDefinition = JSON.parse(stdout);
           return eachCb();
-        } catch(e) {
+        } catch (e) {
           return eachCb(e);
         }
       });
@@ -74,5 +74,5 @@ class NimCompiler {
   }
 }
 
-module.exports = NimCompiler
+module.exports = NimCompiler;
 
