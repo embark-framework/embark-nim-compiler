@@ -18,7 +18,6 @@ then add embark-nim-compiler to the plugins section in `embark.json`:
   "plugins": {
     "embark-nim-compiler": {
       "setupBlockchainOptions": true,
-      "useTestnet": false,
       "libHeraPath": "path/to/libHera.so"
     }
   }
@@ -27,6 +26,13 @@ then add embark-nim-compiler to the plugins section in `embark.json`:
 
 - `setupBlockchainOptions`: boolean that when set to `true`, will change the blockchain config for you. If you set this to `false`, you need to set the blockchain config yourself so that it supports eWasm
 - `libHeraPath`: string path to the file `libHera.so` that is used to have Geth use Hera as a VM. Not needed if `setupBlockchainOptions` is `false`
+
+Since you need to have Geth+Hera installed, make sure that the built Geth is in your Path or change `ethereumClientBin` in you blockchain config to point to the Geth executable (absolute path).
+
+### Temporary endpoint
+
+You can use our temporary endpoint available at `http://159.65.52.177:8545/`.
+This endpoint connects to an eWasm testnet node, but we'll probably shut down at some point, so don't rely on it for production.
 
 ## Requirements
 

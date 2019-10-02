@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require('path');
 const {exec} = require('child_process');
 const async = require('async');
+const binaryen = require('binaryen');
 
 function buf2hex(buffer) { // buffer is an ArrayBuffer
   return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
@@ -44,29 +45,48 @@ class NimCompiler {
       compiledObject[className] = {};
 
       // Compile file
-      // TODO wait for docker image
-
-
-      // Get code from wasm file
-      const codeHex = "0x" + buf2hex(fs.readFileSync(file.path.replace('.nim', '.wasm')));
-
-      compiledObject[className].runtimeBytecode = codeHex;
-      compiledObject[className].realRuntimeBytecode = codeHex;
-      compiledObject[className].code = codeHex;
-
-      // Get ABI from nim file
-      exec(`docker run --entrypoint="abi_gen" -v "${this.dappPath('contracts')}":/code/ -w /code/ jacqueswww/nimclang ${path.basename(file.path)}`, (err, stdout, stderr) => {
+      exec(`docker run --entrypoint="nimplayc" -v "${this.dappPath()}":/code/ -w /code/ jacqueswww/nimclang ${file.path.replace(/\\/g, '/')}`, (err, stdout, stderr) => {
         if (err) {
-          this.logger.error('Error while getting ABI');
+          this.logger.error('Error while compiling Nim contract');
           this.logger.error(stderr);
           return eachCb(err);
         }
+
+        // Get bytecode from the WASM file
+        let escapedWast = '';
+        const wasm = buf2hex(fs.readFileSync(file.path.replace('.nim', '.wasm')));
+        for (let i = 0; i < wasm.length; i += 2) {
+          escapedWast += "\\" + wasm.slice(i, i + 2);
+        }
+
+        let codeHex;
+        const wast = `(module (import "ethereum" "finish" (func $finish (param i32 i32))) (memory 100) (data (i32.const 0)  "${escapedWast}") (export "memory" (memory 0)) (export "main" (func $main)) (func $main (call $finish (i32.const 0) (i32.const ${wasm.length / 2}))))`;
+
         try {
-          compiledObject[className].abiDefinition = JSON.parse(stdout);
-          return eachCb();
+          let module = binaryen.parseText(wast);
+          codeHex = buf2hex(module.emitBinary());
         } catch (e) {
           return eachCb(e);
         }
+
+        compiledObject[className].runtimeBytecode = codeHex;
+        compiledObject[className].realRuntimeBytecode = codeHex;
+        compiledObject[className].code = codeHex;
+
+        // Get ABI from nim file
+        exec(`docker run --entrypoint="abi_gen" -v "${this.dappPath('contracts')}":/code/ -w /code/ jacqueswww/nimclang ${path.basename(file.path)}`, (err, stdout, stderr) => {
+          if (err) {
+            this.logger.error('Error while getting ABI');
+            this.logger.error(stderr);
+            return eachCb(err);
+          }
+          try {
+            compiledObject[className].abiDefinition = JSON.parse(stdout);
+            return eachCb();
+          } catch (e) {
+            return eachCb(e);
+          }
+        });
       });
     }, (err) => {
       cb(err, compiledObject);
