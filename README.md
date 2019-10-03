@@ -5,6 +5,8 @@ Plugin for [Embark](https://github.com/embark-framework/embark) to compile [Nim 
 
 ## Installation
 
+### Plugin
+
 In your embark dapp directory:
 
 ```npm install embark-nim-compiler --save```
@@ -28,6 +30,16 @@ then add embark-nim-compiler to the plugins section in `embark.json`:
 - `libHeraPath`: string path to the file `libHera.so` that is used to have Geth use Hera as a VM. Not needed if `setupBlockchainOptions` is `false`
 
 Since you need to have Geth+Hera installed, make sure that the built Geth is in your Path or change `ethereumClientBin` in you blockchain config to point to the Geth executable (absolute path).
+
+### Configs
+
+If you plan to use the eWasm testnet, you will need to have an account with tesnet Ether.
+
+You can find the testnet faucet here: http://ewasm.ethereum.org/faucet/
+
+You will need to connect your Metamask extension to the testnet. To do so, either connect it to you local Geth instance or to a hosted node.
+
+Once you have ETH in your account, add it to the `accounts` section in the blockchain config. You can find information on how to do it here: https://embark.status.im/docs/blockchain_accounts_configuration.html
 
 ### Temporary endpoint
 
