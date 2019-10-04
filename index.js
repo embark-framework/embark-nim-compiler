@@ -8,6 +8,8 @@ function buf2hex(buffer) { // buffer is an ArrayBuffer
   return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join('');
 }
 
+const OUTPUT_DIR = '.embark/ewasm-contract-outputs';
+
 class NimCompiler {
   constructor(embark) {
     this.events = embark.events;
@@ -45,7 +47,9 @@ class NimCompiler {
       compiledObject[className] = {};
 
       // Compile file
-      exec(`docker run --entrypoint="nimplayc" -v "${this.dappPath()}":/code/ -w /code/ jacqueswww/nimclang ${file.path.replace(/\\/g, '/')}`, (err, stdout, stderr) => {
+      const formattedFile = file.path.replace(/\\/g, '/');
+      const output = OUTPUT_DIR + '/' + path.basename(formattedFile);
+      exec(`docker run --entrypoint="nimplayc" -v "${this.dappPath()}":/code/ -w /code/ jacqueswww/nimclang ${formattedFile} ${output}`, (err, stdout, stderr) => {
         if (err) {
           this.logger.error('Error while compiling Nim contract');
           this.logger.error(stderr);
@@ -54,7 +58,7 @@ class NimCompiler {
 
         // Get bytecode from the WASM file
         let escapedWast = '';
-        const wasm = buf2hex(fs.readFileSync(file.path.replace('.nim', '.wasm')));
+        const wasm = buf2hex(fs.readFileSync(this.dappPath(output)));
         for (let i = 0; i < wasm.length; i += 2) {
           escapedWast += "\\" + wasm.slice(i, i + 2);
         }
@@ -74,7 +78,7 @@ class NimCompiler {
         compiledObject[className].code = codeHex;
 
         // Get ABI from nim file
-        exec(`docker run --entrypoint="abi_gen" -v "${this.dappPath('contracts')}":/code/ -w /code/ jacqueswww/nimclang ${path.basename(file.path)}`, (err, stdout, stderr) => {
+        exec(`docker run --entrypoint="abi_gen" -v "${this.dappPath()}":/code/ -w /code/ jacqueswww/nimclang ${formattedFile}`, (err, stdout, stderr) => {
           if (err) {
             this.logger.error('Error while getting ABI');
             this.logger.error(stderr);
