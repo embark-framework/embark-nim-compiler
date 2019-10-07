@@ -1,6 +1,6 @@
 {
   "name": "embark-nim-compiler",
-  "version": "5.0.0",
+  "version": "0.0.1",
   "description": "Plugin for Embark to compile Nim contracts",
   "main": "index.js",
   "scripts": {
